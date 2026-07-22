@@ -17,25 +17,50 @@ export default function App() {
   const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydOax8mtS5SjJDj76ry9ASsDkifaiOUt_3qfR5Qg6qusxeUKcTDVLgGYKUmQoYBhsq/exec';
 
   useEffect(() => {
-  fetch(GOOGLE_SCRIPT_URL)
-    .then((res) => res.json())
-    .then((responseData) => {
-      // Check karein ki response Array hai ya nahi
-      if (Array.isArray(responseData)) {
-        setData(responseData);
-      } else {
-        console.error('API response is not an array:', responseData);
-        setData([]); // Crash hone se bachane ke liye empty array set karein
-      }
+  const SHEET_ID = '1tAxv2Oj0griVhc-ANQDGvMzWhebHySFeBiUEfKhMGH8';
+  const SHEET_NAME = 'Scores'; // Apni sheet ka exact tab name
+
+  // Google Sheet Direct API URL
+  const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+
+  fetch(URL)
+    .then((res) => res.text())
+    .then((text) => {
+      // JSON Parsing (Response clean kar rahe hain)
+      const jsonString = text.substring(47, text.length - 2);
+      const data = JSON.parse(jsonString);
+
+      // Header row comfortably store kar rahe hain
+      const headers = data.table.cols.map((col) => col && col.label ? col.label.trim() : '');
+
+      // Rows Format karna
+      const formattedRows = data.table.rows.map((row) => {
+        let obj = {};
+        if (row && row.c) {
+          row.c.forEach((cell, index) => {
+            const key = headers[index];
+            if (key) {
+              if (cell) {
+                // Formatting Fix: cell.f Formatted text (jaise % ya Date) deta hai, agar null ho toh cell.v (raw value) use karein
+                obj[key] = cell.f !== undefined && cell.f !== null ? cell.f : (cell.v !== null ? cell.v : '');
+              } else {
+                obj[key] = '';
+              }
+            }
+          });
+        }
+        return obj;
+      });
+
+      setData(formattedRows);
       setLoading(false);
     })
     .catch((err) => {
-      console.error('Error fetching data:', err);
+      console.error('Error fetching sheet data directly:', err);
       setData([]);
       setLoading(false);
     });
 }, []);
-
   const weekList = useMemo(() => {
   if (!Array.isArray(data)) return ['All'];
   const weeks = [...new Set(data.map((item) => item['Week #']))].filter(Boolean);
