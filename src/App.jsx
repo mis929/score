@@ -16,21 +16,18 @@ export default function App() {
 
   useEffect(() => {
     const SHEET_ID = '1tAxv2Oj0griVhc-ANQDGvMzWhebHySFeBiUEfKhMGH8';
-    const SHEET_NAME = 'Dashboard'; // ✅ Corrected Tab Name from Image
+    const SHEET_NAME = 'Dashboard';
 
-    const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+    const URL = "https://script.google.com/macros/s/AKfycbyarpgTxr8a_gcRHBnEdTMYdeJZocKesIEtZo16u_2CvQKBicSCg43pFmg20xhRPoCr/exec";
 
     fetch(URL)
       .then((res) => res.text())
       .then((text) => {
-        // Parse GViz Response safely
         const jsonString = text.substring(47, text.length - 2);
         const parsed = JSON.parse(jsonString);
 
-        // Clean headers
         const headers = parsed.table.cols.map((col) => (col && col.label ? col.label.trim() : ''));
 
-        // Row mapping
         const formattedRows = parsed.table.rows.map((row) => {
           let obj = {};
           if (row && row.c) {
@@ -38,7 +35,6 @@ export default function App() {
               const key = headers[index];
               if (key) {
                 if (cell) {
-                  // f = Formatted String (e.g. "88.00%" or "03/01/2026"), v = Raw Value
                   obj[key] = cell.f !== undefined && cell.f !== null ? cell.f : (cell.v !== null ? cell.v : '');
                 } else {
                   obj[key] = '';
@@ -107,7 +103,6 @@ export default function App() {
     { name: 'Pending', value: metrics.pendingTasks },
   ];
 
-  // Safe Percent Formatter
   const formatPercentage = (val) => {
     if (val === undefined || val === null || val === '') return '0%';
     if (typeof val === 'string' && val.includes('%')) return val;
@@ -115,7 +110,6 @@ export default function App() {
     const num = parseFloat(val);
     if (isNaN(num)) return '0%';
 
-    // If decimal like 0.88 -> 88%, else direct 88%
     return num <= 1 ? `${Math.round(num * 100)}%` : `${Math.round(num)}%`;
   };
 
@@ -241,7 +235,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Employee Details List Section */}
+      {/* Employee Details List Section (Scrollable Table) */}
       <div style={{
         backgroundColor: '#ffffff',
         borderRadius: '12px',
