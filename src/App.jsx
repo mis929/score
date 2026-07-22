@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Search, Calendar, User, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
-import './index.css';
+import './index.css'; // Pure Vanilla CSS import
 
 const COLORS = ['#10B981', '#F59E0B', '#EF4444', '#3B82F6'];
 
@@ -14,64 +14,35 @@ export default function App() {
   const [selectedPerson, setSelectedPerson] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyWrJRmD_wBuBCpPAF1gwaNUKlvRoYVZi0vO_-hIqTVROQpl0vr0GLlWnY20UL0DnqC/exec';
+
   useEffect(() => {
-    const SHEET_ID = '1tAxv2Oj0griVhc-ANQDGvMzWhebHySFeBiUEfKhMGH8';
-    const SHEET_NAME = 'Dashboard';
-
-    const URL = "https://script.google.com/macros/s/AKfycbyarpgTxr8a_gcRHBnEdTMYdeJZocKesIEtZo16u_2CvQKBicSCg43pFmg20xhRPoCr/exec";
-
-    fetch(URL)
-      .then((res) => res.text())
-      .then((text) => {
-        const jsonString = text.substring(47, text.length - 2);
-        const parsed = JSON.parse(jsonString);
-
-        const headers = parsed.table.cols.map((col) => (col && col.label ? col.label.trim() : ''));
-
-        const formattedRows = parsed.table.rows.map((row) => {
-          let obj = {};
-          if (row && row.c) {
-            row.c.forEach((cell, index) => {
-              const key = headers[index];
-              if (key) {
-                if (cell) {
-                  obj[key] = cell.f !== undefined && cell.f !== null ? cell.f : (cell.v !== null ? cell.v : '');
-                } else {
-                  obj[key] = '';
-                }
-              }
-            });
-          }
-          return obj;
-        });
-
-        setData(formattedRows);
+    fetch(GOOGLE_SCRIPT_URL)
+      .then((res) => res.json())
+      .then((data) => {
+        setData(data);
         setLoading(false);
       })
       .catch((err) => {
-        console.error('Error fetching sheet data:', err);
-        setData([]);
+        console.error('Error fetching data:', err);
         setLoading(false);
       });
   }, []);
 
   const weekList = useMemo(() => {
-    if (!Array.isArray(data)) return ['All'];
     const weeks = [...new Set(data.map((item) => item['Week #']))].filter(Boolean);
     return ['All', ...weeks];
   }, [data]);
 
   const personList = useMemo(() => {
-    if (!Array.isArray(data)) return [];
     const persons = [...new Set(data.map((item) => item['Person']))].filter(Boolean);
-    return persons.filter((p) => String(p).toLowerCase().includes(searchQuery.toLowerCase()));
+    return persons.filter((p) => p.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [data, searchQuery]);
 
   const filteredData = useMemo(() => {
-    if (!Array.isArray(data)) return [];
     return data.filter((item) => {
-      const matchWeek = selectedWeek === 'All' || String(item['Week #']) === String(selectedWeek);
-      const matchPerson = selectedPerson === 'All' || String(item['Person']) === String(selectedPerson);
+      const matchWeek = selectedWeek === 'All' || item['Week #'] === selectedWeek;
+      const matchPerson = selectedPerson === 'All' || item['Person'] === selectedPerson;
       return matchWeek && matchPerson;
     });
   }, [data, selectedWeek, selectedPerson]);
@@ -102,16 +73,6 @@ export default function App() {
     { name: 'Done With Delay', value: metrics.taskDoneByDelay },
     { name: 'Pending', value: metrics.pendingTasks },
   ];
-
-  const formatPercentage = (val) => {
-    if (val === undefined || val === null || val === '') return '0%';
-    if (typeof val === 'string' && val.includes('%')) return val;
-
-    const num = parseFloat(val);
-    if (isNaN(num)) return '0%';
-
-    return num <= 1 ? `${Math.round(num * 100)}%` : `${Math.round(num)}%`;
-  };
 
   if (loading) {
     return (
@@ -224,7 +185,7 @@ export default function App() {
               <PieChart>
                 <Pie data={pieData} cx="50%" cy="50%" outerRadius={90} dataKey="value">
                   {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[(index + 1) % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={COLORS[index + 1]} />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -235,65 +196,46 @@ export default function App() {
         </div>
       </div>
 
-      {/* Employee Details List Section (Scrollable Table) */}
-      <div style={{
-        backgroundColor: '#ffffff',
-        borderRadius: '12px',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-        border: '1px solid #e5e7eb',
-        marginTop: '24px',
-        overflow: 'hidden'
-      }}>
-        <div style={{ padding: '16px 24px', borderBottom: '1px solid #f3f4f6' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#111827', margin: 0 }}>
-            Employee Details List
-          </h2>
+      {/* Table */}
+      <div className="table-card">
+        <div className="table-header">
+          <h2>Employee Details List</h2>
         </div>
-
-        <div style={{ maxHeight: '420px', overflowY: 'auto', overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+        <div className="table-wrapper">
+          <table>
             <thead>
-              <tr style={{ backgroundColor: '#f9fafb', borderBottom: '2px solid #e5e7eb', position: 'sticky', top: 0, zIndex: 10 }}>
-                <th style={{ padding: '12px 16px', fontWeight: '600', color: '#374151', whiteSpace: 'nowrap' }}>Date</th>
-                <th style={{ padding: '12px 16px', fontWeight: '600', color: '#374151', whiteSpace: 'nowrap' }}>Week #</th>
-                <th style={{ padding: '12px 16px', fontWeight: '600', color: '#374151', whiteSpace: 'nowrap' }}>Person</th>
-                <th style={{ padding: '12px 16px', fontWeight: '600', color: '#374151', whiteSpace: 'nowrap' }}>Weekly Score %</th>
-                <th style={{ padding: '12px 16px', fontWeight: '600', color: '#374151', whiteSpace: 'nowrap' }}>Total Task</th>
-                <th style={{ padding: '12px 16px', fontWeight: '600', color: '#374151', whiteSpace: 'nowrap' }}>Done Task</th>
-                <th style={{ padding: '12px 16px', fontWeight: '600', color: '#374151', whiteSpace: 'nowrap' }}>Pending</th>
-                <th style={{ padding: '12px 16px', fontWeight: '600', color: '#374151', whiteSpace: 'nowrap' }}>Task Done By Delay</th>
+              <tr>
+                <th>Date</th>
+                <th>Week #</th>
+                <th>Person</th>
+                <th>Weekly Score %</th>
+                <th>Total Task</th>
+                <th>Done Task</th>
+                <th>Pending</th>
+                <th>Task Done By Delay</th>
               </tr>
             </thead>
             <tbody>
-              {filteredData && filteredData.length > 0 ? (
+              {filteredData.length > 0 ? (
                 filteredData.map((row, index) => (
-                  <tr key={index} style={{ borderBottom: '1px solid #f3f4f6', backgroundColor: index % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
-                    <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>{row['Date'] || '-'}</td>
-                    <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>{row['Week #'] || '-'}</td>
-                    <td style={{ padding: '12px 16px', whiteSpace: 'nowrap', fontWeight: '600' }}>{row['Person'] || '-'}</td>
-                    <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
-                      <span style={{
-                        backgroundColor: '#d1fae5',
-                        color: '#065f46',
-                        padding: '4px 10px',
-                        borderRadius: '9999px',
-                        fontSize: '12px',
-                        fontWeight: '600'
-                      }}>
-                        {formatPercentage(row['Weekly Score %'])}
+                  <tr key={index}>
+                    <td>{row['Date'] ? new Date(row['Date']).toLocaleDateString() : '-'}</td>
+                    <td>{row['Week #']}</td>
+                    <td><strong>{row['Person']}</strong></td>
+                    <td>
+                      <span className="badge">
+                        {(Number(row['Weekly Score %']) * 100).toFixed(0)}%
                       </span>
                     </td>
-                    <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>{row['Total Task'] ?? 0}</td>
-                    <td style={{ padding: '12px 16px', whiteSpace: 'nowrap', color: '#10B981', fontWeight: '600' }}>{row['Done Task'] ?? 0}</td>
-                    <td style={{ padding: '12px 16px', whiteSpace: 'nowrap', color: '#EF4444', fontWeight: '600' }}>{row['Pending'] ?? 0}</td>
-                    <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>{row['Task Done By Delay'] ?? 0}</td>
+                    <td>{row['Total Task']}</td>
+                    <td className="text-emerald">{row['Done Task']}</td>
+                    <td className="text-rose">{row['Pending']}</td>
+                    <td className="text-amber">{row['Task Done By Delay']}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: '24px', color: '#6b7280' }}>
-                    No matching records found.
-                  </td>
+                  <td colSpan="8" className="text-center">No matching records found.</td>
                 </tr>
               )}
             </tbody>
