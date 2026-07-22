@@ -14,49 +14,23 @@ export default function App() {
   const [selectedPerson, setSelectedPerson] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBmIm79EbOj_Zsh-XYf_AuC98QZQqL-6DFVPy64pt6C0b4ZK-h8JRIh65JmVATihWS/exec';
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydOax8mtS5SjJDj76ry9ASsDkifaiOUt_3qfR5Qg6qusxeUKcTDVLgGYKUmQoYBhsq/exec';
 
- useEffect(() => {
-  const SHEET_ID = '1tAxv2Oj0griVhc-ANQDGvMzWhebHySFeBiUEfKhMGH8';
-  const SHEET_NAME = 'Scores'; // Apni Google Sheet ke Tab ka naam
-
-  const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
-
-  fetch(URL)
-    .then((res) => res.text())
-    .then((text) => {
-      // GViz response clean karke parse kar rahe hain
-      const jsonString = text.substring(47, text.length - 2);
-      const data = JSON.parse(jsonString);
-
-      // Headers extract karna
-      const headers = data.table.cols.map((col) => (col && col.label ? col.label.trim() : ''));
-
-      // Rows extract karke Object array banana
-      const formattedRows = data.table.rows.map((row) => {
-        let obj = {};
-        if (row && row.c) {
-          row.c.forEach((cell, index) => {
-            const key = headers[index];
-            if (key) {
-              if (cell) {
-                // Formatted value pehle, warna Raw value
-                obj[key] = cell.f !== undefined && cell.f !== null ? cell.f : (cell.v !== null ? cell.v : '');
-              } else {
-                obj[key] = '';
-              }
-            }
-          });
-        }
-        return obj;
-      });
-
-      console.log("Fetched Data Successfully:", formattedRows);
-      setData(formattedRows);
+  useEffect(() => {
+  fetch(GOOGLE_SCRIPT_URL)
+    .then((res) => res.json())
+    .then((responseData) => {
+      // Check karein ki response Array hai ya nahi
+      if (Array.isArray(responseData)) {
+        setData(responseData);
+      } else {
+        console.error('API response is not an array:', responseData);
+        setData([]); // Crash hone se bachane ke liye empty array set karein
+      }
       setLoading(false);
     })
     .catch((err) => {
-      console.error('Error fetching sheet data directly:', err);
+      console.error('Error fetching data:', err);
       setData([]);
       setLoading(false);
     });
@@ -80,7 +54,7 @@ const filteredData = useMemo(() => {
     const matchWeek = selectedWeek === 'All' || item['Week #'] === selectedWeek;
     const matchPerson = selectedPerson === 'All' || item['Person'] === selectedPerson;
     return matchWeek && matchPerson;
-  });
+  
 }, [data, selectedWeek, selectedPerson]);
 
   const metrics = useMemo(() => {
