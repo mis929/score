@@ -14,7 +14,7 @@ export default function App() {
   const [selectedPerson, setSelectedPerson] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyPyt8RKBlhXwPyTr_tj9lUy2WCRKzmIs451Re6QSPiPvlsGBWiTWmSKddOsfO7vl7a/exec';
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBmIm79EbOj_Zsh-XYf_AuC98QZQqL-6DFVPy64pt6C0b4ZK-h8JRIh65JmVATihWS/exec';
 
   useEffect(() => {
   fetch(GOOGLE_SCRIPT_URL)
@@ -153,7 +153,7 @@ const filteredData = useMemo(() => {
         </div>
 
         <div className="kpi-card">
-          
+
           <div className="kpi-icon red"><AlertCircle size={24} /></div>
           <div className="kpi-info">
             <p>Pending Tasks</p>
