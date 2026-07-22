@@ -260,46 +260,33 @@ const filteredData = useMemo(() => {
               borderBottom: '1px solid #f3f4f6',
               backgroundColor: index % 2 === 0 ? '#ffffff' : '#f9fafb'
             }}>
-              <td style={{ padding: '12px 16px', color: '#4b5563', whiteSpace: 'nowrap' }}>
-                {row['Date'] ? new Date(row['Date']).toLocaleDateString() : '-'}
-              </td>
-              <td style={{ padding: '12px 16px', color: '#4b5563', whiteSpace: 'nowrap' }}>
-                {row['Week #']}
-              </td>
-              <td style={{ padding: '12px 16px', fontWeight: '600', color: '#111827', whiteSpace: 'nowrap' }}>
-                {row['Person']}
-              </td>
-              <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
-                <span style={{
-                  backgroundColor: '#d1fae5',
-                  color: '#065f46',
-                  padding: '4px 10px',
-                  borderRadius: '9999px',
-                  fontSize: '12px',
-                  fontWeight: '600'
-                }}>
-                  {row['Weekly Score %'] ? `${(Number(row['Weekly Score %']) * 100).toFixed(0)}%` : '0%'}
-                </span>
-              </td>
-              <td style={{ padding: '12px 16px', color: '#4b5563', whiteSpace: 'nowrap' }}>
-                {row['Total Task'] ?? 0}
-              </td>
-              <td style={{ padding: '12px 16px', color: '#059669', fontWeight: '600', whiteSpace: 'nowrap' }}>
-                {row['Done Task'] ?? 0}
-              </td>
-              <td style={{ padding: '12px 16px', color: '#dc2626', fontWeight: '600', whiteSpace: 'nowrap' }}>
-                {row['Pending'] ?? 0}
-              </td>
-              <td style={{ padding: '12px 16px', color: '#d97706', whiteSpace: 'nowrap' }}>
-                {row['Task Done By Delay'] ?? 0}
-              </td>
-            </tr>
-          ))
-        ) : (
-          <tr>
-            <td colSpan="8" style={{ textAlign: 'center', padding: '24px', color: '#9ca3af' }}>
-              No matching records found.
-            </td>
+             <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+  <span style={{
+    backgroundColor: '#d1fae5',
+    color: '#065f46',
+    padding: '4px 10px',
+    borderRadius: '9999px',
+    fontSize: '12px',
+    fontWeight: '600'
+  }}>
+    {(() => {
+      const val = row['Weekly Score %'];
+      
+      // 1. Agar value khali/null hai
+      if (val === undefined || val === null || val === '') return '0%';
+      
+      // 2. Agar pehle se string me '%' laga hua aa raha hai (e.g. "80%")
+      if (typeof val === 'string' && val.includes('%')) return val;
+      
+      // 3. Agar raw decimal/number hai (e.g. 0.8 ya 80)
+      const num = parseFloat(val);
+      if (isNaN(num)) return '0%';
+      
+      // Agar 1 se chota decimal hai (0.85 -> 85%), nahi toh direct percentage
+      return num <= 1 ? `${Math.round(num * 100)}%` : `${Math.round(num)}%`;
+    })()}
+  </span>
+</td></td>
           </tr>
         )}
       </tbody>
